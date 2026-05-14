@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Cinéma de Aymen</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; color: #333; }
+        section { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0; }
+        input, button { padding: 12px; margin: 8px 0; width: 100%; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .btn-pdf { background: #6f42c1; margin-top: 10px; }
+        .res-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; }
+        .venu-true { border-left: 6px solid #28a745; background: #f8fff9; }
+        .venu-false { border-left: 6px solid #ccc; }
+        .btn-action { width: auto; padding: 8px 15px; font-size: 0.9em; }
+        .btn-cancel { background: #dc3545; }
+        #reader { width: 100%; max-width: 400px; margin: 15px auto; border-radius: 10px; overflow: hidden; }
+    </style>
+</head>
+<body>
+    <h1>⚙️ Administration Cinéma</h1>
+
+    <section>
+        <h2>🎬 Ajouter un Film</h2>
+        <input type="text" id="fNom" placeholder="Nom du film">
+        <input type="text" id="fHeure" placeholder="Heure (ex: 20:30)">
+        <input type="date" id="fDate">
+        <input type="number" id="fDuree" placeholder="Durée (minutes)">
+        <input type="text" id="fAffiche" placeholder="URL du lien de l'affiche (clic droit sur une image > copier l'adresse)">
+        <button onclick="ajouterFilm()">Ajouter au programme</button>
+        <button class="btn-pdf" onclick="genererPDF()">📄 Télécharger le programme (PDF)</button>
+    </section>
+
+    <section>
+        <h2>📷 Scan de Billet</h2>
+        <div id="reader"></div>
+        <h3 id="scanResult" style="text-align:center; color: #007bff; padding: 10px;">En attente de scan...</h3>
+    </section>
+
+    <section>
+        <h2>🎟️ Réservations & Présences</h2>
+        <div id="resList">Chargement...</div>
+    </section>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC8wGq8dQ5CM8YuCIm_b8yySYtrW4ylSm4",
+            authDomain: "cafe-djoudi.firebaseapp.com",
+            projectId: "cafe-djoudi",
+            storageBucket: "cafe-djoudi.firebasestorage.app",
+            appId: "1:812537096039:web:7f9b79b34454360b73b1c2"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function ajouterFilm() {
+            const film = {
+                nom: document.getElementById('fNom').value,
+                heure: document.getElementById('fHeure').value,
+                date: document.getElementById('fDate').value,
+                duree: document.getElementById('fDuree').value,
+                affiche: document.getElementById('fAffiche').value
+            };
+            db.collection("films").add(film).then(() => {
+                alert("Film ajouté avec succès !");
+                document.querySelectorAll('input').forEach(i => i.value = "");
+            });
+        }
+
+        // Configuration Scanner
+        const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        scanner.render((decodedID) => {
+            db.collection("reservations").doc(decodedID).get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('scanResult').innerHTML = `✅ ACCÈS AUTORISÉ :<br>${data.prenom} ${data.nom}<br>Film : ${data.film}`;
+                    db.collection("reservations").doc(decodedID).update({ venu: true });
+                } else {
+                    document.getElementById('scanResult').innerText = "❌ BILLET INCONNU";
+                }
+            });
+        });
+
+        // Liste des réservations avec boutons Venu / Annuler
+        db.collection("reservations").orderBy("timestamp", "desc").onSnapshot(snap => {
+            const list = document.getElementById("resList");
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const r = doc.data();
+                const id = doc.id;
+                const statusClass = r.venu ? 'venu-true' : 'venu-false';
+                
+                list.innerHTML += `
+                    <div class="res-item ${statusClass}">
+                        <div>
+                            <strong>${r.prenom} ${r.nom}</strong><br>
+                            <small>${r.film}</small>
+                        </div>
+                        <div>
+                            ${!r.venu 
+                                ? `<button class="btn-action" style="background:#28a745" onclick="setVenu('${id}', true)">Marquer Venu</button>`
+                                : `<button class="btn-action btn-cancel" onclick="setVenu('${id}', false)">Annuler Venu</button>`
+                            }
+                        </div>
+                    </div>`;
+            });
+        });
+
+        function setVenu(id, val) {
+            db.collection("reservations").doc(id).update({ venu: val });
+        }
+
+        async function genererPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(18);
+            doc.text("CINÉMA DE AYMEN - PROGRAMME", 20, 20);
+            
+            const snap = await db.collection("films").get();
+            let y = 40;
+            doc.setFontSize(12);
+            snap.forEach(fDoc => {
+                const f = fDoc.data();
+                doc.text(`• ${f.nom} | ${f.date} à ${f.heure} (${f.duree} min)`, 20, y);
+                y += 12;
+            });
+            doc.save("programme_aymen.pdf");
+        }
+    </script>
+</body>
+</html>

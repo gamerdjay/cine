@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le Cinéma de Aymen</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; padding: 20px; }
+        h1 { text-align: center; color: #e50914; text-transform: uppercase; letter-spacing: 2px; }
+        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; padding: 20px; }
+        .film-card { background: #1e1e1e; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.5); border: 1px solid #333; }
+        .film-card img { width: 100%; height: 400px; object-fit: cover; }
+        .info { padding: 15px; }
+        .info h3 { margin: 0 0 10px 0; color: #fff; }
+        .info p { font-size: 0.9em; color: #aaa; margin: 5px 0; }
+        button { background: #e50914; color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; }
+        button:hover { background: #b20710; }
+        
+        /* Modal & Overlay */
+        #overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index: 99; }
+        #modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; color:black; padding:25px; border-radius:15px; text-align:center; z-index: 100; width: 90%; max-width: 350px; }
+        #modal input { display: block; width: 100%; margin: 12px 0; padding: 12px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
+        #qrcode { margin: 15px auto; display: flex; justify-content: center; min-height: 128px; }
+        .btn-download { background: #28a745; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+    <h1>🍿 Le Cinéma de Aymen</h1>
+    <div class="container" id="filmsList">Chargement du programme...</div>
+
+    <div id="overlay" onclick="fermerModal()"></div>
+    <div id="modal">
+        <h2 id="modalTitle" style="margin-top:0">Réserver</h2>
+        <input type="text" id="nom" placeholder="Votre Nom">
+        <input type="text" id="prenom" placeholder="Votre Prénom">
+        <button onclick="validerReservation()">Confirmer ma place</button>
+        <div id="qrcode"></div>
+        <button id="downloadBtn" class="btn-download" onclick="downloadQR()">⬇️ Télécharger le Billet</button>
+        <button style="background:#666; margin-top:10px" onclick="fermerModal()">Fermer</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC8wGq8dQ5CM8YuCIm_b8yySYtrW4ylSm4",
+            authDomain: "cafe-djoudi.firebaseapp.com",
+            projectId: "cafe-djoudi",
+            storageBucket: "cafe-djoudi.firebasestorage.app",
+            appId: "1:812537096039:web:7f9b79b34454360b73b1c2"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let currentFilm = null;
+
+        // Affichage des films
+        db.collection("films").onSnapshot(snap => {
+            const list = document.getElementById("filmsList");
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const f = doc.data();
+                list.innerHTML += `
+                    <div class="film-card">
+                        <img src="${f.affiche || 'https://via.placeholder.com/300x450?text=Pas+dAffiche'}" alt="Affiche">
+                        <div class="info">
+                            <h3>${f.nom}</h3>
+                            <p>📅 Date : ${f.date}</p>
+                            <p>🕒 Heure : ${f.heure}</p>
+                            <p>⏳ Durée : ${f.duree} min</p>
+                            <button onclick="ouvrirModal('${doc.id}', '${f.nom}')">Réserver un billet</button>
+                        </div>
+                    </div>`;
+            });
+        });
+
+        function ouvrirModal(id, nom) {
+            currentFilm = { id, nom };
+            document.getElementById('modalTitle').innerText = nom;
+            document.getElementById('modal').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('qrcode').innerHTML = "";
+            document.getElementById('downloadBtn').style.display = "none";
+        }
+
+        function fermerModal() {
+            document.getElementById('modal').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        async function validerReservation() {
+            const n = document.getElementById('nom').value;
+            const p = document.getElementById('prenom').value;
+            if(!n || !p) return alert("Veuillez entrer votre Nom et Prénom");
+
+            const res = { nom: n, prenom: p, film: currentFilm.nom, venu: false, timestamp: Date.now() };
+            const docRef = await db.collection("reservations").add(res);
+            
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 128, height: 128 });
+            document.getElementById('downloadBtn').style.display = "block";
+        }
+
+        function downloadQR() {
+            const img = document.querySelector("#qrcode img");
+            const link = document.createElement('a');
+            link.download = `Billet_${currentFilm.nom}.png`;
+            link.href = img.src;
+            link.click();
+        }
+    </script>
+</body>
+</html>
