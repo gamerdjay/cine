@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin - Cinéma de Aymen</title>
-    <!-- Bibliothèques nécessaires -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -17,8 +16,9 @@
         .res-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; margin-top: 5px; }
         .v-true { border-left: 5px solid #28a745; background: #f0fff4; }
         .v-false { border-left: 5px solid #ccc; }
-        .btn-sm { width: auto; font-size: 0.85em; padding: 5px 15px; }
+        .btn-sm { width: auto; font-size: 0.85em; padding: 5px 10px; margin-left: 5px; }
         .btn-red { background: #dc3545; }
+        .btn-orange { background: #fd7e14; }
         #reader { width: 100%; max-width: 350px; margin: auto; }
     </style>
 </head>
@@ -26,7 +26,7 @@
     <h1>⚙️ Admin - Le Cinéma de Aymen</h1>
 
     <section>
-        <h2>🎬 Ajouter un Film</h2>
+        <h2>🎬 Gestion du Programme</h2>
         <input type="text" id="fNom" placeholder="Nom du film">
         <input type="text" id="fHeure" placeholder="Heure (ex: 20:30)">
         <input type="date" id="fDate">
@@ -34,6 +34,7 @@
         <input type="text" id="fAffiche" placeholder="Lien de l'affiche (URL)">
         <button onclick="ajouterFilm()">Ajouter au programme</button>
         <button class="btn-pdf" onclick="genererPDF()">📄 Télécharger le Programme (PDF)</button>
+        <button class="btn-orange" onclick="nettoyerAnciennesReservations()">🧹 Nettoyer les anciennes réservations</button>
     </section>
 
     <section>
@@ -43,7 +44,7 @@
     </section>
 
     <section>
-        <h2>🎟️ Réservations</h2>
+        <h2>🎟️ Réservations Actives</h2>
         <div id="resList">Chargement...</div>
     </section>
 
@@ -58,6 +59,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // 1. Ajouter un film
         function ajouterFilm() {
             const f = {
                 nom: document.getElementById('fNom').value,
@@ -66,10 +68,13 @@
                 duree: document.getElementById('fDuree').value,
                 affiche: document.getElementById('fAffiche').value
             };
-            db.collection("films").add(f).then(() => alert("Film ajouté !"));
+            db.collection("films").add(f).then(() => {
+                alert("Film ajouté !");
+                location.reload();
+            });
         }
 
-        // Scanner Caméra
+        // 2. Scanner Caméra
         const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
         scanner.render((id) => {
             db.collection("reservations").doc(id).get().then(doc => {
@@ -83,7 +88,7 @@
             });
         });
 
-        // Liste avec boutons Venu / Annuler
+        // 3. Liste des réservations avec bouton Supprimer
         db.collection("reservations").orderBy("timestamp", "desc").onSnapshot(snap => {
             const list = document.getElementById("resList");
             list.innerHTML = "";
@@ -93,11 +98,12 @@
                 list.innerHTML += `
                     <div class="res-item ${r.venu ? 'v-true' : 'v-false'}">
                         <span><b>${r.prenom} ${r.nom}</b><br><small>${r.film}</small></span>
-                        <div>
+                        <div style="display:flex">
                             ${!r.venu 
-                                ? `<button class="btn-sm" style="background:#28a745" onclick="setVenu('${id}', true)">Marquer Venu</button>`
-                                : `<button class="btn-sm btn-red" onclick="setVenu('${id}', false)">Annuler Venu</button>`
+                                ? `<button class="btn-sm" style="background:#28a745" onclick="setVenu('${id}', true)">Venu</button>`
+                                : `<button class="btn-sm btn-orange" onclick="setVenu('${id}', false)">Annuler</button>`
                             }
+                            <button class="btn-sm btn-red" onclick="supprimerReservation('${id}')">🗑️</button>
                         </div>
                     </div>`;
             });
@@ -107,16 +113,51 @@
             db.collection("reservations").doc(id).update({ venu: val });
         }
 
-        // Fonction PDF Corrigée
+        function supprimerReservation(id) {
+            if(confirm("Supprimer définitivement cette réservation ?")) {
+                db.collection("reservations").doc(id).delete();
+            }
+        }
+
+        // 4. NETTOYAGE AUTOMATIQUE
+        // Cette fonction compare la date du film avec l'heure actuelle
+        async function nettoyerAnciennesReservations() {
+            const maintenant = new Date();
+            const filmsSnap = await db.collection("films").get();
+            const reservationsSnap = await db.collection("reservations").get();
+
+            let count = 0;
+
+            filmsSnap.forEach(fDoc => {
+                const film = fDoc.data();
+                // Créer un objet Date pour la fin du film (Date + Heure + Durée)
+                const dateFilm = new Date(film.date + "T" + film.heure);
+                const dateFinFilm = new Date(dateFilm.getTime() + (film.duree * 60000));
+
+                if (maintenant > dateFinFilm) {
+                    // Le film est fini, on cherche les réservations de ce film pour les supprimer
+                    reservationsSnap.forEach(rDoc => {
+                        if (rDoc.data().film === film.nom) {
+                            db.collection("reservations").doc(rDoc.id).delete();
+                            count++;
+                        }
+                    });
+                }
+            });
+            if(count > 0) alert(count + " anciennes réservations nettoyées.");
+        }
+
+        // Exécuter le nettoyage au chargement pour que ce soit automatique
+        window.onload = nettoyerAnciennesReservations;
+
+        // 5. Générer PDF
         async function genererPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             doc.setFontSize(20);
             doc.text("PROGRAMME DU CINEMA DE AYMEN", 105, 20, { align: "center" });
-            
             const snap = await db.collection("films").get();
             let y = 40;
-            doc.setFontSize(12);
             snap.forEach(fDoc => {
                 const f = fDoc.data();
                 doc.text(`- ${f.nom} : ${f.date} à ${f.heure} (${f.duree} min)`, 20, y);
