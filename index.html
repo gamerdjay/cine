@@ -3,43 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Le Cinéma de Aymen</title>
+    <title>🎬 Le Cinéma de Aymen</title>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; padding: 20px; }
+        :root {
+            --bg-color: #121212;
+            --text-color: white;
+            --card-bg: #1e1e1e;
+        }
+
+        .light-mode {
+            --bg-color: #f4f4f4;
+            --text-color: #121212;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            transition: 0.3s;
+        }
+
         h1 { text-align: center; color: #e50914; text-transform: uppercase; letter-spacing: 2px; }
-        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; padding: 20px; }
-        .film-card { background: #1e1e1e; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.5); border: 1px solid #333; }
+
+        #top-bar {
+            position: fixed; top: 10px; right: 10px;
+            display: flex; gap: 10px; z-index: 1000;
+        }
+
+        #status, #userMenu { padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+        #status { background: #28a745; }
+        #userMenu { background: #e50914; color: white; }
+
+        .container {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px; padding: 20px;
+        }
+
+        .film-card {
+            background: var(--card-bg); border-radius: 15px; overflow: hidden;
+            border: 1px solid #333; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
         .film-card img { width: 100%; height: 400px; object-fit: cover; }
         .info { padding: 15px; }
-        .info h3 { margin: 0 0 10px 0; }
-        .info p { font-size: 0.9em; color: #aaa; margin: 5px 0; }
-        button { background: #e50914; color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        #overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index: 99; }
-        #modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; color:black; padding:25px; border-radius:15px; text-align:center; z-index: 100; width: 90%; max-width: 350px; }
-        #modal input { display: block; width: 100%; margin: 12px 0; padding: 12px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
-        #qrcode { margin: 15px auto; display: flex; justify-content: center; }
-        .btn-download { background: #28a745; margin-top: 10px; display: none; }
+
+        /* --- Espace Compte --- */
+        #mesBilletsContainer {
+            display: none; position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%,-50%); background: white; color: black;
+            padding: 25px; border-radius: 15px; z-index: 101;
+            width: 90%; max-width: 450px; max-height: 85vh; overflow-y: auto;
+        }
+
+        .section-titre { border-bottom: 2px solid #e50914; margin-top: 15px; font-weight: bold; color: #e50914; }
+        
+        .mini-ticket {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9em;
+        }
+
+        .btn-action { border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; color: white; margin-left: 5px; }
+        .btn-cancel { background: #dc3545; }
+        .btn-view { background: #007bff; }
+
+        /* --- Profil --- */
+        #welcome-msg { text-align: center; margin-bottom: 20px; }
+        #user-photo { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #e50914; object-fit: cover; }
+
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; }
+        
+        #modal {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            background: white; color: black; padding: 25px; border-radius: 15px; z-index: 101; width: 90%; max-width: 400px; text-align: center;
+        }
+
+        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background: #e50914; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
+
+    <div id="top-bar">
+        <div id="status">🟢</div>
+        <div id="userMenu" onclick="toggleMesBillets()">👤 Mon Compte</div>
+    </div>
+
+    <div id="welcome-msg" style="display:none;">
+        <img id="user-photo" src="">
+        <h2 id="user-name"></h2>
+    </div>
+
     <h1>🍿 Le Cinéma de Aymen</h1>
-    <div class="container" id="filmsList">Chargement du programme...</div>
+
+    <div class="container" id="filmsList">Chargement...</div>
+
+    <div id="mesBilletsContainer">
+        <h2 style="text-align:center;">🎫 Mes Billets</h2>
+        <div id="billets-a-venir"></div>
+        <div id="billets-termines"></div>
+        <hr>
+        <div style="text-align:center;">
+            <p>⭐ <b>Votre avis compte :</b></p>
+            <a href="https://forms.gle/pem7RA7ext9Lb6DQ7" target="_blank" style="color:#e50914; font-weight:bold;">Donner mon avis</a>
+            <button onclick="toggleMesBillets()" style="background:#666; margin-top:15px">Fermer</button>
+        </div>
+    </div>
 
     <div id="overlay" onclick="fermerModal()"></div>
+
     <div id="modal">
         <h2 id="modalTitle">Réserver</h2>
-        <input type="text" id="nom" placeholder="Votre Nom">
-        <input type="text" id="prenom" placeholder="Votre Prénom">
-        <button onclick="validerReservation()">Confirmer ma place</button>
-        <div id="qrcode"></div>
-        <button id="downloadBtn" class="btn-download" onclick="downloadQR()">⬇️ Télécharger le Billet</button>
-        <button style="background:#666; margin-top:10px" onclick="fermerModal()">Fermer</button>
+        <div id="reservation-form">
+            <input type="number" id="codeClient" placeholder="Code Client (ex: 125, 147)" oninput="verifierCode()">
+            <input type="text" id="nom" placeholder="Nom">
+            <input type="text" id="prenom" placeholder="Prénom">
+            <div style="text-align:left; font-size: 0.9em; margin: 10px 0; color: #444;">
+                <label><input type="checkbox" id="snackOption" style="width:auto;"> 🍿 Snack à volonté inclut</label>
+            </div>
+            <button onclick="validerReservation()">Réserver ma place</button>
+        </div>
+        <div id="qrcode-container" style="display:none; margin-top:15px;"></div>
+        <div id="postResBtns" style="display:none;">
+            <button id="downloadBtn" style="background:#28a745" onclick="downloadQR()">⬇️ Télécharger</button>
+            <button style="background:#25D366" onclick="shareWhatsApp()">📲 WhatsApp</button>
+        </div>
+        <button onclick="fermerModal()" style="background:#666; margin-top:10px;">Fermer</button>
     </div>
 
     <script>
+        /* ========= CONFIG & INIT ========= */
         const firebaseConfig = {
             apiKey: "AIzaSyC8wGq8dQ5CM8YuCIm_b8yySYtrW4ylSm4",
             authDomain: "cafe-djoudi.firebaseapp.com",
@@ -52,22 +151,130 @@
 
         let currentFilm = null;
 
-        db.collection("films").onSnapshot(snap => {
+        // Mode Sombre Automatique
+        const heure = new Date().getHours();
+        if(heure > 7 && heure < 19) document.body.classList.add('light-mode');
+
+        /* ========= CODES CLIENTS ========= */
+        function verifierCode() {
+            const code = document.getElementById('codeClient').value;
+            const profils = {
+                "125": { nom: "Djoudi", prenom: "Emna", photo: "https://cdn-icons-png.flaticon.com/512/6997/6997662.png" },
+                "147": { nom: "Djoudi", prenom: "Aymen", photo: "https://cdn-icons-png.flaticon.com/512/6833/6833892.png" }
+            };
+
+            if (profils[code]) {
+                const p = profils[code];
+                document.getElementById('nom').value = p.nom;
+                document.getElementById('prenom').value = p.prenom;
+                document.getElementById('user-name').innerText = `Bienvenue ${p.prenom}`;
+                document.getElementById('user-photo').src = p.photo;
+                document.getElementById('welcome-msg').style.display = "block";
+            }
+        }
+
+        /* ========= ESPACE COMPTE ========= */
+        function toggleMesBillets() {
+            const container = document.getElementById('mesBilletsContainer');
+            const overlay = document.getElementById('overlay');
+            if(container.style.display === 'block') {
+                fermerModal();
+            } else {
+                overlay.style.display = 'block';
+                container.style.display = 'block';
+                chargerMesBillets();
+            }
+        }
+
+        async function chargerMesBillets() {
+            const userNom = document.getElementById('nom').value;
+            if(!userNom) {
+                document.getElementById('billets-a-venir').innerHTML = "<p style='text-align:center;'>Veuillez remplir votre nom dans le formulaire pour voir vos billets.</p>";
+                return;
+            }
+
+            const sections = { aVenir: document.getElementById('billets-a-venir'), termines: document.getElementById('billets-termines') };
+            Object.values(sections).forEach(s => s.innerHTML = "");
+
+            const snap = await db.collection("reservations").where("nom", "==", userNom).get();
+            const filmsSnap = await db.collection("films").get();
+            const filmsData = {};
+            filmsSnap.forEach(d => filmsData[d.data().nom] = d.data());
+
+            snap.forEach(doc => {
+                const r = doc.data();
+                const id = doc.id;
+                const html = `
+                    <div class="mini-ticket">
+                        <span><b>${r.film}</b><br><small>${r.venu ? '✅ Passé' : '⌛ Réservé'}</small></span>
+                        <div>
+                            <button class="btn-action btn-view" onclick="voirBillet('${id}', '${r.film}', '${r.nom}', '${r.prenom}', '${r.snack}')">🎟️</button>
+                            ${!r.venu ? `<button class="btn-action btn-cancel" onclick="annulerRes('${id}')">❌</button>` : ''}
+                        </div>
+                    </div>`;
+                if(r.venu) sections.termines.innerHTML += html;
+                else sections.aVenir.innerHTML += html;
+            });
+
+            sections.aVenir.innerHTML = "<div class='section-titre'>📅 À VENIR</div>" + (sections.aVenir.innerHTML || "<p>Aucun billet</p>");
+            sections.termines.innerHTML = "<div class='section-titre'>🎬 TERMINÉS</div>" + (sections.termines.innerHTML || "<p>Aucun billet</p>");
+        }
+
+        async function annulerRes(id) {
+            if(confirm("Annuler cette réservation ?")) {
+                await db.collection("reservations").doc(id).delete();
+                chargerMesBillets();
+            }
+        }
+
+        /* ========= AFFICHAGE BILLET (DESIGN PDF) ========= */
+        function voirBillet(id, filmNom, nom, prenom, snack) {
+            document.getElementById('mesBilletsContainer').style.display = 'none';
+            document.getElementById('reservation-form').style.display = 'none';
+            const qrContainer = document.getElementById('qrcode-container');
+            qrContainer.style.display = 'block';
+            document.getElementById('modal').style.display = 'block';
+            document.getElementById('modalTitle').innerText = "Mon Billet";
+            
+            const codeClient = document.getElementById('codeClient').value || "Public";
+
+            qrContainer.innerHTML = `
+                <div class="ticket" style="background: white; color: black; border: 1px solid #333; padding: 0; overflow: hidden; text-align: left; font-family: Arial;">
+                    <div style="background: #e50914; color: white; padding: 10px; font-weight: bold; text-align: center;">${filmNom.toUpperCase()}</div>
+                    <div style="padding: 15px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                            <tr><td style="padding: 4px; border: 1px solid #ddd; font-weight: bold;">Nom :</td><td style="padding: 4px; border: 1px solid #ddd;">${nom}</td></tr>
+                            <tr><td style="padding: 4px; border: 1px solid #ddd; font-weight: bold;">Prénom :</td><td style="padding: 4px; border: 1px solid #ddd;">${prenom}</td></tr>
+                            <tr><td style="padding: 4px; border: 1px solid #ddd; font-weight: bold;">Film :</td><td style="padding: 4px; border: 1px solid #ddd;">${filmNom}</td></tr>
+                            <tr><td style="padding: 4px; border: 1px solid #ddd; font-weight: bold;">Client :</td><td style="padding: 4px; border: 1px solid #ddd;">${codeClient}</td></tr>
+                            <tr><td style="padding: 4px; border: 1px solid #ddd; font-weight: bold;">Snack :</td><td style="padding: 4px; border: 1px solid #ddd;">${snack === 'true' || snack === true ? 'Inclus 🍿' : 'Non'}</td></tr>
+                        </table>
+                        <div id="qr-ticket" style="text-align: center; margin-top: 15px; display: flex; justify-content: center;"></div>
+                    </div>
+                </div>`;
+            
+            new QRCode(document.getElementById("qr-ticket"), { text: id, width: 120, height: 120 });
+            document.getElementById('postResBtns').style.display = 'block';
+        }
+
+        /* ========= LOGIQUE RÉSERVATION ========= */
+        db.collection("films").onSnapshot(async snap => {
             const list = document.getElementById("filmsList");
             list.innerHTML = "";
-            snap.forEach(doc => {
+            for (const doc of snap.docs) {
                 const f = doc.data();
+                const resSnap = await db.collection("reservations").where("film", "==", f.nom).get();
+                const placesRestantes = f.placesMax - resSnap.size;
                 list.innerHTML += `
                     <div class="film-card">
-                        <img src="${f.affiche || 'https://via.placeholder.com/300x450'}" alt="Affiche">
+                        <img src="${f.affiche || 'https://via.placeholder.com/300x450'}">
                         <div class="info">
                             <h3>${f.nom}</h3>
                             <p>📅 ${f.date} à ${f.heure}</p>
-                            <p>⏳ ${f.duree} min</p>
-                            <button onclick="ouvrirModal('${doc.id}', '${f.nom}')">Réserver</button>
+                            <button onclick="ouvrirModal('${doc.id}','${f.nom}')">Réserver (${placesRestantes} places)</button>
                         </div>
                     </div>`;
-            });
+            }
         });
 
         function ouvrirModal(id, nom) {
@@ -75,31 +282,38 @@
             document.getElementById('modalTitle').innerText = nom;
             document.getElementById('modal').style.display = 'block';
             document.getElementById('overlay').style.display = 'block';
-            document.getElementById('qrcode').innerHTML = "";
-            document.getElementById('downloadBtn').style.display = "none";
+            document.getElementById('reservation-form').style.display = 'block';
+            document.getElementById('qrcode-container').style.display = 'none';
+            document.getElementById('postResBtns').style.display = 'none';
         }
 
         function fermerModal() {
             document.getElementById('modal').style.display = 'none';
+            document.getElementById('mesBilletsContainer').style.display = 'none';
             document.getElementById('overlay').style.display = 'none';
         }
 
         async function validerReservation() {
-            const n = document.getElementById('nom').value;
-            const p = document.getElementById('prenom').value;
-            if(!n || !p) return alert("Nom et prénom requis");
-            const res = { nom: n, prenom: p, film: currentFilm.nom, venu: false, timestamp: Date.now() };
+            const n = document.getElementById('nom').value.trim();
+            const p = document.getElementById('prenom').value.trim();
+            const snack = document.getElementById('snackOption').checked;
+            if (!n || !p) return alert("Nom et Prénom requis");
+
+            const res = { nom: n, prenom: p, film: currentFilm.nom, snack: snack, venu: false, timestamp: Date.now() };
             const docRef = await db.collection("reservations").add(res);
-            new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 128, height: 128 });
-            document.getElementById('downloadBtn').style.display = "block";
+            voirBillet(docRef.id, currentFilm.nom, n, p, snack);
         }
 
         function downloadQR() {
-            const img = document.querySelector("#qrcode img");
+            const img = document.querySelector("#qr-ticket img");
             const link = document.createElement('a');
-            link.download = `Billet_${currentFilm.nom}.png`;
+            link.download = "Billet_Cinema.png";
             link.href = img.src;
             link.click();
+        }
+
+        function shareWhatsApp() {
+            window.open(`https://wa.me/?text=J'ai réservé ma place pour ${currentFilm.nom} ! 🍿`, '_blank');
         }
     </script>
 </body>
