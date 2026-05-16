@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎬 Le Cinéma de Aymen</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
@@ -13,6 +15,7 @@
             --bg-color: #121212;
             --text-color: white;
             --card-bg: #1e1e1e;
+            --primary-color: #e50914;
         }
 
         .light-mode {
@@ -30,7 +33,7 @@
             transition: 0.3s;
         }
 
-        h1 { text-align: center; color: #e50914; text-transform: uppercase; letter-spacing: 2px; }
+        h1 { text-align: center; color: var(--primary-color); text-transform: uppercase; letter-spacing: 2px; }
 
         #top-bar {
             position: fixed; top: 10px; right: 10px;
@@ -39,7 +42,7 @@
 
         #status, #userMenu { padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; }
         #status { background: #28a745; }
-        #userMenu { background: #e50914; color: white; }
+        #userMenu { background: var(--primary-color); color: white; }
 
         .container {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -49,10 +52,85 @@
         .film-card {
             background: var(--card-bg); border-radius: 15px; overflow: hidden;
             border: 1px solid #333; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
         }
 
-        .film-card img { width: 100%; height: 400px; object-fit: cover; }
-        .info { padding: 15px; }
+        .film-card img { width: 100%; height: 380px; object-fit: cover; }
+        .info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .info h3 { margin: 0 0 10px 0; }
+        .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .btn-trailer { background: #333; color: #fff; border: 1px solid #555; }
+        .btn-trailer:hover { background: #444; }
+
+        /* --- Borne Automatique & Fente de Ticket --- */
+        .ticket-slot {
+            position: relative;
+            background: #222;
+            padding: 20px 10px 10px 10px;
+            border-radius: 8px;
+            box-shadow: inset 0 8px 10px rgba(0,0,0,0.8), 0 4px 10px rgba(0,0,0,0.3);
+            overflow: hidden;
+            margin-top: 15px;
+        }
+        .ticket-slot::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 10%; right: 10%; height: 6px;
+            background: #000;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 2px 5px rgba(255,255,255,0.1);
+            z-index: 2;
+        }
+
+        /* --- Design Ticket Rétro Dentelé --- */
+        .ticket-retro {
+            background: #fff3cd;
+            color: #332200;
+            border: 2px dashed #b58105;
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: relative;
+            background-image: radial-gradient(circle at top left, transparent 12px, #fff3cd 13px),
+                              radial-gradient(circle at top right, transparent 12px, #fff3cd 13px),
+                              radial-gradient(circle at bottom left, transparent 12px, #fff3cd 13px),
+                              radial-gradient(circle at bottom right, transparent 12px, #fff3cd 13px);
+            
+            /* Animation d'impression en direct depuis la fente */
+            transform: translateY(-100%);
+            animation: imprimerTicket 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            z-index: 1;
+        }
+
+        @keyframes imprimerTicket {
+            0% { transform: translateY(-100%); opacity: 0; filter: brightness(0.7); }
+            20% { opacity: 1; }
+            100% { transform: translateY(0); filter: brightness(1); }
+        }
+
+        .ticket-header {
+            text-align: center;
+            border-bottom: 2px dotted #b58105;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #745203;
+        }
+        .ticket-body table { width: 100%; border-collapse: collapse; }
+        .ticket-body td { padding: 6px 0; border-bottom: 1px dashed rgba(181,129,5,0.2); }
+        .ticket-footer {
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            border-top: 2px dotted #b58105;
+            padding-top: 15px;
+        }
+        .ticket-id { font-size: 0.75rem; color: #666; max-width: 120px; word-break: break-all; font-weight: bold; }
 
         /* --- Espace Compte --- */
         #mesBilletsContainer {
@@ -60,32 +138,39 @@
             transform: translate(-50%,-50%); background: white; color: black;
             padding: 25px; border-radius: 15px; z-index: 101;
             width: 90%; max-width: 450px; max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
 
-        .section-titre { border-bottom: 2px solid #e50914; margin-top: 15px; font-weight: bold; color: #e50914; }
-        
-        .mini-ticket {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9em;
-        }
-
+        .section-titre { border-bottom: 2px solid var(--primary-color); margin-top: 15px; font-weight: bold; color: var(--primary-color); }
+        .mini-ticket { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9em; }
         .btn-action { border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; color: white; margin-left: 5px; }
         .btn-cancel { background: #dc3545; }
         .btn-view { background: #007bff; }
 
         /* --- Profil --- */
         #welcome-msg { text-align: center; margin-bottom: 20px; }
-        #user-photo { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #e50914; object-fit: cover; }
+        #user-photo { width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--primary-color); object-fit: cover; }
 
-        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; }
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; }
         
         #modal {
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
-            background: white; color: black; padding: 25px; border-radius: 15px; z-index: 101; width: 90%; max-width: 400px; text-align: center;
+            background: white; color: black; padding: 25px; border-radius: 15px; z-index: 101; width: 90%; max-width: 430px; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
 
+        /* --- Modale Bande-Annonce --- */
+        #trailerModal {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            background: #000; padding: 10px; border-radius: 10px; z-index: 102; width: 90%; max-width: 560px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
         input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { background: #e50914; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button { background: var(--primary-color); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .btn-secondary { background: #666; }
     </style>
 </head>
 <body>
@@ -111,12 +196,12 @@
         <hr>
         <div style="text-align:center;">
             <p>⭐ <b>Votre avis compte :</b></p>
-            <a href="https://forms.gle/pem7RA7ext9Lb6DQ7" target="_blank" style="color:#e50914; font-weight:bold;">Donner mon avis</a>
-            <button onclick="toggleMesBillets()" style="background:#666; margin-top:15px">Fermer</button>
+            <a href="https://forms.gle/pem7RA7ext9Lb6DQ7" target="_blank" style="color:var(--primary-color); font-weight:bold;">Donner mon avis</a>
+            <button onclick="toggleMesBillets()" class="btn-secondary" style="margin-top:15px">Fermer</button>
         </div>
     </div>
 
-    <div id="overlay" onclick="fermerModal()"></div>
+    <div id="overlay" onclick="fermerTout()"></div>
 
     <div id="modal">
         <h2 id="modalTitle">Réserver</h2>
@@ -125,16 +210,25 @@
             <input type="text" id="nom" placeholder="Nom">
             <input type="text" id="prenom" placeholder="Prénom">
             <div style="text-align:left; font-size: 0.9em; margin: 10px 0; color: #444;">
-                <label><input type="checkbox" id="snackOption" style="width:auto;"> 🍿 Snack à volonté inclut</label>
+                <label><input type="checkbox" id="snackOption" style="width:auto;"> 🍿 Snack à volonté inclus</label>
             </div>
-            <button onclick="validerReservation()">Réserver ma place</button>
+            <button id="btnValidationModal" onclick="validerReservation()">Réserver ma place</button>
         </div>
+        
         <div id="qrcode-container" style="display:none; margin-top:15px;"></div>
+        
         <div id="postResBtns" style="display:none;">
-            <button id="downloadBtn" style="background:#28a745" onclick="downloadQR()">⬇️ Télécharger</button>
+            <button id="downloadBtn" style="background:#28a745" onclick="downloadQR()">⬇️ Télécharger PDF</button>
             <button style="background:#25D366" onclick="shareWhatsApp()">📲 WhatsApp</button>
         </div>
-        <button onclick="fermerModal()" style="background:#666; margin-top:10px;">Fermer</button>
+        <button onclick="fermerTout()" class="btn-secondary" style="margin-top:10px;">Fermer</button>
+    </div>
+
+    <div id="trailerModal">
+        <div class="video-container">
+            <iframe id="trailerFrame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+        <button onclick="fermerTrailer()" class="btn-secondary" style="margin-top:8px; padding:8px;">Fermer la vidéo</button>
     </div>
 
     <script>
@@ -150,14 +244,24 @@
         const db = firebase.firestore();
 
         let currentFilm = null;
+        let modeAttente = false; // Suivi contextuel liste d'attente
 
         // Mode Sombre Automatique
         const heure = new Date().getHours();
         if(heure > 7 && heure < 19) document.body.classList.add('light-mode');
 
-        /* ========= CODES CLIENTS ========= */
-        function verifierCode() {
-            const code = document.getElementById('codeClient').value;
+        // Au chargement : Vérification du LocalStorage (Connexion Persistante)
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedCode = localStorage.getItem('codeClient');
+            if (savedCode) {
+                document.getElementById('codeClient').value = savedCode;
+                verifierCode(true); // true évite les alertes intempestives
+            }
+        });
+
+        /* ========= CODES CLIENTS & CONNEXION ========= */
+        function verifierCode(isAuto = false) {
+            const code = document.getElementById('codeClient').value.trim();
             const profils = {
                 "125": { nom: "Djoudi", prenom: "Emna", photo: "https://cdn-icons-png.flaticon.com/512/6997/6997662.png" },
                 "147": { nom: "Djoudi", prenom: "Aymen", photo: "https://cdn-icons-png.flaticon.com/512/6833/6833892.png" }
@@ -170,7 +274,15 @@
                 document.getElementById('user-name').innerText = `Bienvenue ${p.prenom}`;
                 document.getElementById('user-photo').src = p.photo;
                 document.getElementById('welcome-msg').style.display = "block";
+                
+                // Sauvegarde de la session persistante
+                localStorage.setItem('codeClient', code);
             }
+        }
+
+        function deconnexion() {
+            localStorage.removeItem('codeClient');
+            location.reload();
         }
 
         /* ========= ESPACE COMPTE ========= */
@@ -178,7 +290,7 @@
             const container = document.getElementById('mesBilletsContainer');
             const overlay = document.getElementById('overlay');
             if(container.style.display === 'block') {
-                fermerModal();
+                fermerTout();
             } else {
                 overlay.style.display = 'block';
                 container.style.display = 'block';
@@ -189,131 +301,306 @@
         async function chargerMesBillets() {
             const userNom = document.getElementById('nom').value;
             if(!userNom) {
-                document.getElementById('billets-a-venir').innerHTML = "<p style='text-align:center;'>Veuillez remplir votre nom dans le formulaire pour voir vos billets.</p>";
+                document.getElementById('billets-a-venir').innerHTML = "<p style='text-align:center; padding:10px;'>Veuillez entrer votre Code Client ou votre Nom dans le formulaire de réservation pour suivre vos billets.</p>";
                 return;
             }
 
             const sections = { aVenir: document.getElementById('billets-a-venir'), termines: document.getElementById('billets-termines') };
             Object.values(sections).forEach(s => s.innerHTML = "");
 
+            // Récupération des réservations standards
             const snap = await db.collection("reservations").where("nom", "==", userNom).get();
-            const filmsSnap = await db.collection("films").get();
-            const filmsData = {};
-            filmsSnap.forEach(d => filmsData[d.data().nom] = d.data());
-
             snap.forEach(doc => {
                 const r = doc.data();
                 const id = doc.id;
                 const html = `
                     <div class="mini-ticket">
-                        <span><b>${r.film}</b><br><small>${r.venu ? '✅ Passé' : '⌛ Réservé'}</small></span>
+                        <span><b>${r.film}</b><br><small>${r.venu ? '✅ Passé / Validé' : '⌛ Réservé'}</small></span>
                         <div>
-                            <button class="btn-action btn-view" onclick="voirBillet('${id}', '${r.film}', '${r.nom}', '${r.prenom}', '${r.snack}')">🎟️</button>
-                            ${!r.venu ? `<button class="btn-action btn-cancel" onclick="annulerRes('${id}')">❌</button>` : ''}
+                            <button class="btn-action btn-view" onclick="voirBillet('${id}', '${r.film}', '${r.nom}', '${r.prenom}', ${r.snack})">🎟️ Billet</button>
+                            ${!r.venu ? `<button class="btn-action btn-cancel" onclick="annulerRes('${id}', false)">❌</button>` : ''}
                         </div>
                     </div>`;
                 if(r.venu) sections.termines.innerHTML += html;
                 else sections.aVenir.innerHTML += html;
             });
 
-            sections.aVenir.innerHTML = "<div class='section-titre'>📅 À VENIR</div>" + (sections.aVenir.innerHTML || "<p>Aucun billet</p>");
-            sections.termines.innerHTML = "<div class='section-titre'>🎬 TERMINÉS</div>" + (sections.termines.innerHTML || "<p>Aucun billet</p>");
+            // Récupération des billets en liste d'attente
+            const snapAttente = await db.collection("liste_attente").where("nom", "==", userNom).get();
+            snapAttente.forEach(doc => {
+                const r = doc.data();
+                const id = doc.id;
+                sections.aVenir.innerHTML += `
+                    <div class="mini-ticket" style="border-left: 4px solid #fd7e14;">
+                        <span><b>${r.film}</b><br><small style="color:#fd7e14;">⏳ Sur liste d'attente</small></span>
+                        <div>
+                            <button class="btn-action btn-cancel" onclick="annulerRes('${id}', true)">❌</button>
+                        </div>
+                    </div>`;
+            });
+
+            sections.aVenir.innerHTML = "<div class='section-titre'>📅 À VENIR</div>" + (sections.aVenir.innerHTML || "<p style='padding:10px; font-size:0.9em; opacity:0.6;'>Aucun billet actif</p>");
+            sections.termines.innerHTML = "<div class='section-titre'>🎬 TERMINÉS</div>" + (sections.termines.innerHTML || "<p style='padding:10px; font-size:0.9em; opacity:0.6;'>Aucun historique</p>");
         }
 
-        async function annulerRes(id) {
-            if(confirm("Annuler cette réservation ?")) {
-                await db.collection("reservations").doc(id).delete();
+        async function annulerRes(id, estListeAttente) {
+            if(confirm("Annuler cette inscription définitivement ?")) {
+                const collectionCible = estListeAttente ? "liste_attente" : "reservations";
+                await db.collection(collectionCible).doc(id).delete();
                 chargerMesBillets();
             }
         }
 
-        /* ========= AFFICHAGE BILLET (DESIGN PDF) ========= */
+        /* ========= DESIGN DU BILLET RETRO VIRTUEL ========= */
         function voirBillet(id, filmNom, nom, prenom, snack) {
             document.getElementById('mesBilletsContainer').style.display = 'none';
             document.getElementById('reservation-form').style.display = 'none';
             const qrContainer = document.getElementById('qrcode-container');
             qrContainer.style.display = 'block';
             document.getElementById('modal').style.display = 'block';
-            document.getElementById('modalTitle').innerText = "Mon Billet";
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('modalTitle').innerText = "Mon Ticket d'Entrée";
             
             const codeClient = document.getElementById('codeClient').value || "Public";
 
             qrContainer.innerHTML = `
-                <div class="ticket" style="background: white; color: black; border: 1px solid #333; padding: 0; overflow: hidden; text-align: left; font-family: Arial;">
-                    <div style="background: #e50914; color: white; padding: 10px; font-weight: bold; text-align: center;">${filmNom.toUpperCase()}</div>
-                    <div style="padding: 15px;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                            <tr><td style="padding: 4px; border: 1px solid #ddd; font-weight: bold;">Nom :</td><td style="padding: 4px; border: 1px solid #ddd;">${nom}</td></tr>
-                            <tr><td style="padding: 4px; border: 1px solid #ddd; font-weight: bold;">Prénom :</td><td style="padding: 4px; border: 1px solid #ddd;">${prenom}</td></tr>
-                            <tr><td style="padding: 4px; border: 1px solid #ddd; font-weight: bold;">Film :</td><td style="padding: 4px; border: 1px solid #ddd;">${filmNom}</td></tr>
-                            <tr><td style="padding: 4px; border: 1px solid #ddd; font-weight: bold;">Client :</td><td style="padding: 4px; border: 1px solid #ddd;">${codeClient}</td></tr>
-                            <tr><td style="padding: 4px; border: 1px solid #ddd; font-weight: bold;">Snack :</td><td style="padding: 4px; border: 1px solid #ddd;">${snack === 'true' || snack === true ? 'Inclus 🍿' : 'Non'}</td></tr>
-                        </table>
-                        <div id="qr-ticket" style="text-align: center; margin-top: 15px; display: flex; justify-content: center;"></div>
+                <div class="ticket-slot">
+                    <div class="ticket-retro">
+                        <div class="ticket-header">${filmNom.toUpperCase()}</div>
+                        <div class="ticket-body">
+                            <table>
+                                <tr><td><b>SPECTATEUR :</b></td><td style="text-align:right;">${prenom} ${nom}</td></tr>
+                                <tr><td><b>ACCÈS SALLE :</b></td><td style="text-align:right;">${filmNom}</td></tr>
+                                <tr><td><b>COMPTE :</b></td><td style="text-align:right;">N°${codeClient}</td></tr>
+                                <tr><td><b>SNACK POPCORN :</b></td><td style="text-align:right;">${snack === true || snack === 'true' ? 'Inclus 🍿' : 'Non inclus'}</td></tr>
+                            </table>
+                        </div>
+                        <div class="ticket-footer">
+                            <div id="qr-ticket"></div>
+                            <div class="ticket-id">RÉSERVATION ID :<br>${id}</div>
+                        </div>
                     </div>
                 </div>`;
             
-            new QRCode(document.getElementById("qr-ticket"), { text: id, width: 120, height: 120 });
+            new QRCode(document.getElementById("qr-ticket"), { text: id, width: 100, height: 100 });
             document.getElementById('postResBtns').style.display = 'block';
         }
 
-        /* ========= LOGIQUE RÉSERVATION ========= */
+        /* ========= LISTE DES FILMS ========= */
         db.collection("films").onSnapshot(async snap => {
             const list = document.getElementById("filmsList");
             list.innerHTML = "";
+            
             for (const doc of snap.docs) {
                 const f = doc.data();
                 const resSnap = await db.collection("reservations").where("film", "==", f.nom).get();
-                const placesRestantes = f.placesMax - resSnap.size;
+                
+                const maxPlaces = f.placesMax || 3;
+                const placesRestantes = Math.max(0, maxPlaces - resSnap.size);
+                const trailerUrl = f.trailer || "https://www.youtube.com/embed/dQw4w9WgXcQ"; 
+
+                const boutonReservation = placesRestantes > 0 
+                    ? `<button onclick="ouvrirModal('${doc.id}','${f.nom}', false)">Réserver mon billet</button>`
+                    : `<button onclick="ouvrirModal('${doc.id}','${f.nom}', true)" style="background: #fd7e14;">Rejoindre l'attente ⏳</button>`;
+
                 list.innerHTML += `
                     <div class="film-card">
                         <img src="${f.affiche || 'https://via.placeholder.com/300x450'}">
                         <div class="info">
-                            <h3>${f.nom}</h3>
-                            <p>📅 ${f.date} à ${f.heure}</p>
-                            <button onclick="ouvrirModal('${doc.id}','${f.nom}')">Réserver (${placesRestantes} places)</button>
+                            <div>
+                                <h3>${f.nom}</h3>
+                                <p style="font-size:0.9em; opacity:0.8; margin:5px 0;">📅 ${f.date} à ${f.heure}</p>
+                                <p style="font-weight:bold; font-size:0.85em; color:${placesRestantes > 0 ? '#28a745' : '#fd7e14'};">
+                                    ${placesRestantes > 0 ? `🎟️ Il reste ${placesRestantes} / ${maxPlaces} places` : '⏳ COMPLET — Liste d\'attente ouverte'}
+                                </p>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn-trailer" onclick="ouvrirTrailer('${trailerUrl}')">Bande-annonce 🎬</button>
+                                ${boutonReservation}
+                            </div>
                         </div>
                     </div>`;
             }
         });
 
-        function ouvrirModal(id, nom) {
+        /* ========= FIRESTORE TRANSACTION & GESTION ATTENTE ========= */
+        async function validerReservation() {
+            const n = document.getElementById('nom').value.trim();
+            const p = document.getElementById('prenom').value.trim();
+            const snack = document.getElementById('snackOption').checked;
+            
+            if (!n || !p) return alert("Nom et Prénom requis pour l'attribution du billet.");
+            if (!currentFilm) return;
+
+            // SCÉNARIO A : L'utilisateur s'inscrit volontairement en liste d'attente
+            if (modeAttente) {
+                try {
+                    await db.collection("liste_attente").add({
+                        nom: n,
+                        prenom: p,
+                        film: currentFilm.nom,
+                        snack: snack,
+                        timestamp: Date.now()
+                    });
+                    alert("🔒 Enregistré en Liste d'Attente ! Si un spectateur se désiste, vous obtiendrez sa place en priorité.");
+                    fermerTout();
+                } catch (error) {
+                    alert("Erreur lors de l'inscription en attente : " + error);
+                }
+                return;
+            }
+
+            // SCÉNARIO B : Réservation classique via transaction atomique
+            const filmRef = db.collection("films").doc(currentFilm.id);
+            try {
+                const reservationId = await db.runTransaction(async (transaction) => {
+                    const filmDoc = await transaction.get(filmRef);
+                    if (!filmDoc.exists) throw "Le film sélectionné n'existe plus.";
+
+                    const filmData = filmDoc.data();
+                    const limitPlaces = filmData.placesMax || 3;
+
+                    const resQuery = await db.collection("reservations").where("film", "==", currentFilm.nom).get();
+                    
+                    if (resQuery.size >= limitPlaces) {
+                        throw "Désolé ! Le film vient de passer complet à l'instant.";
+                    }
+
+                    const newResRef = db.collection("reservations").doc();
+                    const resData = {
+                        nom: n,
+                        prenom: p,
+                        film: currentFilm.nom,
+                        snack: snack,
+                        venu: false,
+                        timestamp: Date.now()
+                    };
+
+                    transaction.set(newResRef, resData);
+                    return newResRef.id;
+                });
+
+                voirBillet(reservationId, currentFilm.nom, n, p, snack);
+
+            } catch (error) {
+                alert("Erreur : " + error + "\nN'hésitez pas à rafraîchir la page pour vous inscrire en liste d'attente.");
+            }
+        }
+
+        /* ========= INTERFACES MODALES & POPUPS ========= */
+        function ouvrirModal(id, nom, estEnAttente = false) {
             currentFilm = { id, nom };
-            document.getElementById('modalTitle').innerText = nom;
+            modeAttente = estEnAttente;
+            
+            document.getElementById('modalTitle').innerText = estEnAttente ? `Attente : ${nom}` : nom;
+            document.getElementById('btnValidationModal').innerText = estEnAttente ? "S'inscrire sur la liste d'attente" : "Réserver ma place";
+            document.getElementById('btnValidationModal').style.background = estEnAttente ? "#fd7e14" : "#e50914";
+
             document.getElementById('modal').style.display = 'block';
             document.getElementById('overlay').style.display = 'block';
             document.getElementById('reservation-form').style.display = 'block';
             document.getElementById('qrcode-container').style.display = 'none';
             document.getElementById('postResBtns').style.display = 'none';
+            
+            verifierCode(true);
         }
 
-        function fermerModal() {
+        function abrirTrailer(url) {} // Doublon corrigé ci-dessous
+        function ouvrirTrailer(url) {
+            let embedUrl = url;
+            if(url.includes("watch?v=")) {
+                embedUrl = url.replace("watch?v=", "embed/");
+            }
+            document.getElementById('trailerFrame').src = embedUrl;
+            document.getElementById('trailerModal').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function fermerTrailer() {
+            document.getElementById('trailerModal').style.display = 'none';
+            document.getElementById('trailerFrame').src = "";
+            if(document.getElementById('modal').style.display !== 'block' && document.getElementById('mesBilletsContainer').style.display !== 'block') {
+                document.getElementById('overlay').style.display = 'none';
+            }
+        }
+
+        function fermerTout() {
             document.getElementById('modal').style.display = 'none';
             document.getElementById('mesBilletsContainer').style.display = 'none';
+            document.getElementById('trailerModal').style.display = 'none';
+            document.getElementById('trailerFrame').src = "";
             document.getElementById('overlay').style.display = 'none';
         }
 
-        async function validerReservation() {
-            const n = document.getElementById('nom').value.trim();
-            const p = document.getElementById('prenom').value.trim();
-            const snack = document.getElementById('snackOption').checked;
-            if (!n || !p) return alert("Nom et Prénom requis");
-
-            const res = { nom: n, prenom: p, film: currentFilm.nom, snack: snack, venu: false, timestamp: Date.now() };
-            const docRef = await db.collection("reservations").add(res);
-            voirBillet(docRef.id, currentFilm.nom, n, p, snack);
-        }
-
+        /* ========= PARTAGES & EXPORTS (PDF) ========= */
         function downloadQR() {
-            const img = document.querySelector("#qr-ticket img");
-            const link = document.createElement('a');
-            link.download = "Billet_Cinema.png";
-            link.href = img.src;
-            link.click();
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+            const filmNom = currentFilm ? currentFilm.nom : "Film";
+            const nom = document.getElementById('nom').value.trim() || "Inconnu";
+            const prenom = document.getElementById('prenom').value.trim() || "Inconnu";
+            const codeClient = document.getElementById('codeClient').value || "Public";
+            const snackChecked = document.getElementById('snackOption').checked ? "Inclus (Popcorn) v" : "Non";
+            const dateStr = new Date().toLocaleDateString('fr-FR');
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(22);
+            doc.setTextColor(229, 9, 20);
+            doc.text("LE CINÉMA DE AYMEN", 105, 25, { align: "center" });
+            
+            doc.setFontSize(14);
+            doc.setTextColor(100, 100, 100);
+            doc.text("VOTRE BILLET RETRO D'ENTRÉE", 105, 33, { align: "center" });
+
+            doc.setDrawColor(200, 200, 200);
+            doc.line(20, 38, 190, 38);
+
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            
+            let yPos = 50;
+            const xLabel = 30;
+            const xValue = 80;
+            const rowHeight = 10;
+
+            const data = [
+                { label: "Nom :", value: nom },
+                { label: "Prénom :", value: prenom },
+                { label: "Date d'achat :", value: dateStr },
+                { label: "Film :", value: filmNom },
+                { label: "Client ID :", value: codeClient },
+                { label: "Option Snack :", value: snackChecked }
+            ];
+
+            data.forEach((row) => {
+                doc.setFillColor(245, 245, 245);
+                doc.rect(xLabel, yPos, 50, rowHeight, "F");
+                doc.rect(xLabel, yPos, 50, rowHeight, "S");
+                doc.rect(xValue, yPos, 100, rowHeight, "S");
+
+                doc.setFont("helvetica", "bold");
+                doc.text(row.label, xLabel + 4, yPos + 6.5);
+                
+                doc.setFont("helvetica", "normal");
+                doc.text(row.value, xValue + 4, yPos + 6.5);
+
+                yPos += rowHeight;
+            });
+
+            const qrImg = document.querySelector("#qr-ticket img");
+            if (qrImg && qrImg.src) {
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(11);
+                doc.text("PRÉSENTEZ CE CODE RETRO À L'ENTRÉE", 105, yPos + 15, { align: "center" });
+                doc.addImage(qrImg.src, "PNG", 85, yPos + 22, 40, 40);
+            }
+
+            doc.save(`billet-${filmNom.replace(/\s+/g, '-').toLowerCase()}.pdf`);
         }
 
         function shareWhatsApp() {
-            window.open(`https://wa.me/?text=J'ai réservé ma place pour ${currentFilm.nom} ! 🍿`, '_blank');
+            window.open(`https://wa.me/?text=Super ! J'ai réservé mon billet d'entrée pour le film "${currentFilm.nom}" au Cinéma de Aymen ! 🍿🎬`, '_blank');
         }
     </script>
 </body>
