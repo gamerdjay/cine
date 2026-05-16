@@ -2,53 +2,137 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - Cinéma de Aymen</title>
+    <title>Dashboard Admin - Cinéma de Aymen</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
     <style>
-        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; color: #333; }
-        section { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        input, button { padding: 10px; margin: 5px 0; width: 100%; border-radius: 5px; border: 1px solid #ddd; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
-        .btn-pdf { background: #6f42c1; }
-        .res-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; margin-top: 5px; }
-        .v-true { border-left: 5px solid #28a745; background: #f0fff4; }
-        .v-false { border-left: 5px solid #ccc; }
-        .btn-sm { width: auto; font-size: 0.85em; padding: 5px 10px; margin-left: 5px; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f111a;
+            color: #e2e8f0;
+            padding: 20px;
+            margin: 0;
+        }
+        h1, h2 { color: #fff; text-transform: uppercase; letter-spacing: 1px; }
+        h1 { text-align: center; color: #e50914; margin-bottom: 30px; }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        section {
+            background: #1a1d29;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            border: 1px solid #2d3142;
+        }
+        
+        input, button, select {
+            padding: 12px;
+            margin: 8px 0;
+            width: 100%;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+        }
+        
+        input, select {
+            background: #282a36;
+            border: 1px solid #44475a;
+            color: #fff;
+        }
+        
+        button {
+            background: #e50914;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover { background: #b80710; }
+        
+        .btn-sm { width: auto; padding: 6px 12px; margin: 2px; font-size: 0.85rem; }
         .btn-red { background: #dc3545; }
+        .btn-red:hover { background: #bd2130; }
         .btn-orange { background: #fd7e14; }
-        #reader { width: 100%; max-width: 350px; margin: auto; }
+        .btn-orange:hover { background: #e06302; }
+        
+        /* Zone de Scan */
+        #reader { border-radius: 8px; overflow: hidden; border: none !important; }
+        #scanResult {
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 15px;
+            background: #282a36;
+        }
+        .scan-valide { background: #27a745 !important; color: white; }
+        .scan-deja { background: #ffc107 !important; color: #1a1d29; }
+        .scan-erreur { background: #dc3545 !important; color: white; }
+
+        /* Listes */
+        .item-list { max-height: 300px; overflow-y: auto; margin-top: 15px; }
+        .res-item, .film-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #222533; padding: 12px; margin-bottom: 8px;
+            border-radius: 6px; border-left: 4px solid #e50914;
+        }
+        .res-item.venu { border-left-color: #27a745; opacity: 0.7; }
     </style>
 </head>
 <body>
-    <h1>⚙️ Admin - Le Cinéma de Aymen</h1>
 
-    <section>
-        <h2>🎬 Gestion du Programme</h2>
-        <input type="text" id="fNom" placeholder="Nom du film">
-        <input type="text" id="fHeure" placeholder="Heure (ex: 20:30)">
-        <input type="date" id="fDate">
-        <input type="number" id="fDuree" placeholder="Durée (min)">
-        <input type="text" id="fAffiche" placeholder="Lien de l'affiche (URL)">
-        <button onclick="ajouterFilm()">Ajouter au programme</button>
-        <button class="btn-pdf" onclick="genererPDF()">📄 Télécharger le Programme (PDF)</button>
-        <button class="btn-orange" onclick="nettoyerAnciennesReservations()">🧹 Nettoyer les anciennes réservations</button>
-    </section>
+    <h1>🎬 Panneau d'Administration Cinéma</h1>
 
-    <section>
-        <h2>📷 Scanner un Billet</h2>
-        <div id="reader"></div>
-        <h3 id="scanResult" style="text-align:center; color:#007bff">En attente de scan...</h3>
-    </section>
+    <div class="dashboard-grid">
+        
+        <section>
+            <h2>🎟️ Contrôle des Tickets</h2>
+            <div id="reader"></div>
+            <div id="scanResult">Prêt à scanner...</div>
+            
+            <audio id="successSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav"></audio>
+            <audio id="errorSound" src="https://assets.mixkit.co/active_storage/sfx/2573/2573-84.wav"></audio>
+            <audio id="warningSound" src="https://assets.mixkit.co/active_storage/sfx/911/911-84.wav"></audio>
+        </section>
 
-    <section>
-        <h2>🎟️ Réservations Actives</h2>
-        <div id="resList">Chargement...</div>
-    </section>
+        <section>
+            <h2 id="form-title">➕ Ajouter un Film</h2>
+            <form id="filmForm">
+                <input type="hidden" id="filmId">
+                <input type="text" id="fNom" placeholder="Nom du film" required>
+                <input type="text" id="fAffiche" placeholder="URL de l'affiche (Lien image)">
+                <input type="text" id="fTrailer" placeholder="Lien YouTube de la bande-annonce">
+                <input type="date" id="fDate" required>
+                <input type="time" id="fHeure" required>
+                <input type="number" id="fPlaces" placeholder="Nombre de places maximum (ex: 3)" defaultValue="3" required>
+                <button type="submit" id="btnSubmitFilm">Créer la séance</button>
+                <button type="button" id="btnCancelEdit" class="btn-orange" style="display:none;" onclick="resetFilmForm()">Annuler la modification</button>
+            </form>
+
+            <h3>Films programmés</h3>
+            <div class="item-list" id="filmsList"></div>
+        </section>
+
+        <section>
+            <h2>👥 Réservations Reçues</h2>
+            <div class="item-list" id="resList"></div>
+        </section>
+
+    </div>
 
     <script>
+        /* ========= CONFIG & INIT FIREBASE ========= */
         const firebaseConfig = {
             apiKey: "AIzaSyC8wGq8dQ5CM8YuCIm_b8yySYtrW4ylSm4",
             authDomain: "cafe-djoudi.firebaseapp.com",
@@ -59,36 +143,115 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 1. Ajouter un film
-        function ajouterFilm() {
-            const f = {
-                nom: document.getElementById('fNom').value,
-                heure: document.getElementById('fHeure').value,
-                date: document.getElementById('fDate').value,
-                duree: document.getElementById('fDuree').value,
-                affiche: document.getElementById('fAffiche').value
-            };
-            db.collection("films").add(f).then(() => {
-                alert("Film ajouté !");
-                location.reload();
-            });
-        }
-
-        // 2. Scanner Caméra
-        const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-        scanner.render((id) => {
+        /* ========= CONFIGURATION DU SCANNER DE QR CODES ========= */
+        const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        
+        html5QrcodeScanner.render((id) => {
+            const resultDiv = document.getElementById('scanResult');
+            
             db.collection("reservations").doc(id).get().then(doc => {
-                if (doc.exists) {
+                if(doc.exists) {
                     const r = doc.data();
-                    document.getElementById('scanResult').innerText = `✅ VALIDE : ${r.prenom} ${r.nom} (${r.film})`;
-                    db.collection("reservations").doc(id).update({ venu: true });
+                    
+                    if(r.venu === true) {
+                        document.getElementById("warningSound").play();
+                        resultDiv.innerText = `⚠️ DÉJÀ SCANNE : ${r.prenom} ${r.nom} est déjà entré !`;
+                        resultDiv.className = "scan-deja";
+                        return;
+                    }
+
+                    document.getElementById("successSound").play();
+                    resultDiv.innerText = `✅ VALIDE : ${r.prenom} ${r.nom} (🍿 Snack: ${r.snack ? 'Oui' : 'Non'})`;
+                    resultDiv.className = "scan-valide";
+
+                    db.collection("reservations").doc(id).update({
+                        venu: true,
+                        timestamp: Date.now()
+                    });
+
                 } else {
-                    document.getElementById('scanResult').innerText = "❌ INCONNU";
+                    document.getElementById("errorSound").play();
+                    resultDiv.innerText = "❌ INCONNU : Ticket invalide ou falsifié !";
+                    resultDiv.className = "scan-erreur";
                 }
+            }).catch(err => {
+                console.error(err);
+                resultDiv.innerText = "❌ Erreur de lecture Base de données";
+                resultDiv.className = "scan-erreur";
             });
         });
 
-        // 3. Liste des réservations avec bouton Supprimer
+        /* ========= CRÉATION ET MODIFICATION DE FILMS ========= */
+        document.getElementById('filmForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('filmId').value;
+            const filmData = {
+                nom: document.getElementById('fNom').value,
+                affiche: document.getElementById('fAffiche').value,
+                trailer: document.getElementById('fTrailer').value,
+                date: document.getElementById('fDate').value,
+                heure: document.getElementById('fHeure').value,
+                placesMax: parseInt(document.getElementById('fPlaces').value) || 3
+            };
+
+            if(id) {
+                db.collection("films").doc(id).update(filmData).then(() => {
+                    resetFilmForm();
+                });
+            } else {
+                db.collection("films").add(filmData).then(() => {
+                    document.getElementById('filmForm').reset();
+                });
+            }
+        });
+
+        function editFilm(id, nom, affiche, trailer, date, heure, placesMax) {
+            document.getElementById('form-title').innerText = "📝 Modifier le Film";
+            document.getElementById('filmId').value = id;
+            document.getElementById('fNom').value = nom;
+            document.getElementById('fAffiche').value = affiche === 'undefined' ? '' : affiche;
+            document.getElementById('fTrailer').value = trailer === 'undefined' ? '' : trailer;
+            document.getElementById('fDate').value = date;
+            document.getElementById('fHeure').value = heure;
+            document.getElementById('fPlaces').value = placesMax;
+            
+            document.getElementById('btnSubmitFilm').innerText = "Enregistrer les modifications";
+            document.getElementById('btnCancelEdit').style.display = "block";
+        }
+
+        function resetFilmForm() {
+            document.getElementById('form-title').innerText = "➕ Ajouter un Film";
+            document.getElementById('filmId').value = "";
+            document.getElementById('filmForm').reset();
+            document.getElementById('btnSubmitFilm').innerText = "Créer la séance";
+            document.getElementById('btnCancelEdit').style.display = "none";
+        }
+
+        function supprimerFilm(id) {
+            if(confirm("Supprimer ce film définitivement ? cela n'effacera pas ses réservations.")) {
+                db.collection("films").doc(id).delete();
+            }
+        }
+
+        /* ========= SYNCHRONISATION EN TEMPS RÉEL DES COMPOSANTS ========= */
+        db.collection("films").onSnapshot(snap => {
+            const list = document.getElementById("filmsList");
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const f = doc.data();
+                const id = doc.id;
+                list.innerHTML += `
+                    <div class="film-item">
+                        <span><b>${f.nom}</b> (${f.placesMax || 3} pl.)</span>
+                        <div>
+                            <button class="btn-sm btn-orange" onclick="editFilm('${id}', \`${f.nom}\`, '${f.affiche}', '${f.trailer}', '${f.date}', '${f.heure}', ${f.placesMax || 3})">✏️</button>
+                            <button class="btn-sm btn-red" onclick="supprimerFilm('${id}')">🗑️</button>
+                        </div>
+                    </div>`;
+            });
+        });
+
         db.collection("reservations").orderBy("timestamp", "desc").onSnapshot(snap => {
             const list = document.getElementById("resList");
             list.innerHTML = "";
@@ -96,74 +259,54 @@
                 const r = doc.data();
                 const id = doc.id;
                 list.innerHTML += `
-                    <div class="res-item ${r.venu ? 'v-true' : 'v-false'}">
-                        <span><b>${r.prenom} ${r.nom}</b><br><small>${r.film}</small></span>
-                        <div style="display:flex">
-                            ${!r.venu 
-                                ? `<button class="btn-sm" style="background:#28a745" onclick="setVenu('${id}', true)">Venu</button>`
-                                : `<button class="btn-sm btn-orange" onclick="setVenu('${id}', false)">Annuler</button>`
-                            }
-                            <button class="btn-sm btn-red" onclick="supprimerReservation('${id}')">🗑️</button>
+                    <div class="res-item ${r.venu ? 'venu' : ''}">
+                        <span>
+                            <b>${r.prenom} ${r.nom}</b> ${r.venu ? '📌 En Salle' : '⌛ En Attente'}<br>
+                            <small>${r.film} — Snack: ${r.snack ? '🍿 Oui' : 'Non'}</small>
+                        </span>
+                        <div>
+                            <button class="btn-sm btn-red" onclick="supprimerReservation('${id}', \`${r.film}\`)">🗑️</button>
                         </div>
                     </div>`;
             });
         });
 
-        function setVenu(id, val) {
-            db.collection("reservations").doc(id).update({ venu: val });
-        }
+        /* GESTION INTELLIGENTE FIFO DE LA LISTE D'ATTENTE */
+        async function supprimerReservation(id, filmNom) {
+            if(confirm("Supprimer la réservation définitivement ?")) {
+                try {
+                    // 1. Suppression de la place active
+                    await db.collection("reservations").doc(id).delete();
+                    
+                    // 2. Recherche automatique du premier arrivé en attente pour CE film
+                    const attenteSnap = await db.collection("liste_attente")
+                                                 .where("film", "==", filmNom)
+                                                 .orderBy("timestamp", "asc")
+                                                 .limit(1)
+                                                 .get();
 
-        function supprimerReservation(id) {
-            if(confirm("Supprimer définitivement cette réservation ?")) {
-                db.collection("reservations").doc(id).delete();
-            }
-        }
+                    if(!attenteSnap.empty) {
+                        const premierDoc = attenteSnap.docs[0];
+                        const client = premierDoc.data();
 
-        // 4. NETTOYAGE AUTOMATIQUE
-        // Cette fonction compare la date du film avec l'heure actuelle
-        async function nettoyerAnciennesReservations() {
-            const maintenant = new Date();
-            const filmsSnap = await db.collection("films").get();
-            const reservationsSnap = await db.collection("reservations").get();
+                        // 3. Bascule automatique dans la collection principale
+                        await db.collection("reservations").add({
+                            nom: client.nom,
+                            prenom: client.prenom,
+                            film: client.film,
+                            snack: client.snack,
+                            venu: false,
+                            timestamp: Date.now() // Va notifier instantanément l'écran d'affichage
+                        });
 
-            let count = 0;
-
-            filmsSnap.forEach(fDoc => {
-                const film = fDoc.data();
-                // Créer un objet Date pour la fin du film (Date + Heure + Durée)
-                const dateFilm = new Date(film.date + "T" + film.heure);
-                const dateFinFilm = new Date(dateFilm.getTime() + (film.duree * 60000));
-
-                if (maintenant > dateFinFilm) {
-                    // Le film est fini, on cherche les réservations de ce film pour les supprimer
-                    reservationsSnap.forEach(rDoc => {
-                        if (rDoc.data().film === film.nom) {
-                            db.collection("reservations").doc(rDoc.id).delete();
-                            count++;
-                        }
-                    });
+                        // 4. Retrait de la liste d'attente
+                        await db.collection("liste_attente").doc(premierDoc.id).delete();
+                        alert(`🎉 Place libérée ! ${client.prenom} ${client.nom} est repêché(e) automatiquement de la liste d'attente.`);
+                    }
+                } catch (err) {
+                    console.error("Erreur liste d'attente : ", err);
                 }
-            });
-            if(count > 0) alert(count + " anciennes réservations nettoyées.");
-        }
-
-        // Exécuter le nettoyage au chargement pour que ce soit automatique
-        window.onload = nettoyerAnciennesReservations;
-
-        // 5. Générer PDF
-        async function genererPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.setFontSize(20);
-            doc.text("PROGRAMME DU CINEMA DE AYMEN", 105, 20, { align: "center" });
-            const snap = await db.collection("films").get();
-            let y = 40;
-            snap.forEach(fDoc => {
-                const f = fDoc.data();
-                doc.text(`- ${f.nom} : ${f.date} à ${f.heure} (${f.duree} min)`, 20, y);
-                y += 10;
-            });
-            doc.save("programme.pdf");
+            }
         }
     </script>
 </body>
