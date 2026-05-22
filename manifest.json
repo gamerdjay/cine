@@ -1,0 +1,30 @@
+{
+  "short_name": "CinéAymen",
+  "name": "Le Cinéma de Aymen",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3176/3176311.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3176/3176311.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/index.html",
+  "background_color": "#121212",
+  "theme_color": "#e50914",
+  "display": "standalone",
+  "orientation": "portrait",
+  "shortcuts": [
+    {
+      "name": "Mon Billet",
+      "short_name": "Billet",
+      "description": "Afficher directement mon dernier billet de cinéma",
+      "url": "/index.html?action=show_ticket",
+      "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/6833/6833892.png", "sizes": "192x192" }]
+    }
+  ]
+}
