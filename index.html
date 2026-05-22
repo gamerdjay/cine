@@ -7,7 +7,7 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="CinéAymen">
+    <meta name="apple-mobile-web-app-title" content="Ciné Aymen">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3176/3176311.png">
     
     <link rel="manifest" href="manifest.json">
@@ -58,7 +58,7 @@
             transition: background 0.5s ease, color 0.3s ease;
         }
 
-        h1 { text-align: center; color: var(--primary-color); text-transform: uppercase; letter-spacing: 2px; margin-top: 60px; }
+        h1 { text-align: center; color: var(--primary-color); text-transform: uppercase; letter-spacing: 2px; }
 
         #top-bar {
             position: fixed; top: 10px; right: 10px;
@@ -70,28 +70,6 @@
         #status { background: #28a745; color: white; }
         #userMenu { background: var(--primary-color); color: white; }
         #btn-ambiance { background: #333; color: white; transition: 0.3s; }
-
-        /* Conteneur des Boutons PWA & Widget */
-        .pwa-widget-bar {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: -20px auto 25px auto;
-            max-width: 500px;
-            padding: 0 20px;
-        }
-        .btn-pwa-feature {
-            flex: 1;
-            width: auto;
-            padding: 10px 15px;
-            font-size: 0.85rem;
-            border-radius: 8px;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .btn-pwa-feature:active { transform: scale(0.96); }
 
         .container {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -115,7 +93,6 @@
         .btn-trailer { background: #333; color: #fff; border: 1px solid #555; }
         .btn-trailer:hover { background: #444; }
 
-        /* Animation d'urgence douce pour inciter à la réservation (Badge Clignotant) */
         @keyframes pulseUrgent {
             0% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.7; transform: scale(0.98); box-shadow: 0 0 10px rgba(253, 126, 20, 0.2); }
@@ -126,7 +103,6 @@
             animation: pulseUrgent 1.8s infinite ease-in-out;
         }
 
-        /* Onglets Espace Client */
         .tabs-header {
             display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px;
         }
@@ -137,7 +113,6 @@
             background: var(--primary-color); color: white;
         }
 
-        /* --- Squelettes de Chargement (Skeleton Loader) --- */
         .skeleton-card {
             background: var(--card-bg); border-radius: 15px; overflow: hidden;
             height: 530px; display: flex; flex-direction: column; border: 1px solid #333;
@@ -157,7 +132,6 @@
             100% { background-position: -200% 0; }
         }
 
-        /* --- Borne Automatique & Fente de Ticket --- */
         .ticket-slot {
             position: relative;
             background: #222;
@@ -179,7 +153,6 @@
             z-index: 2;
         }
 
-        /* Animation de secousse physique pour la fente de la borne (Impression) */
         @keyframes shakeSlot {
             0% { transform: scale(1) translate(0, 0); }
             10% { transform: scale(1.02) translate(-1px, -1px); }
@@ -194,7 +167,6 @@
             box-shadow: inset 0 8px 10px rgba(0,0,0,0.8), 0 4px 20px rgba(229, 9, 20, 0.4);
         }
 
-        /* --- Design Ticket Rétro Dentelé & Texturé --- */
         .ticket-retro {
             background: #fff3cd;
             color: #332200;
@@ -205,14 +177,12 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             position: relative;
             transform-style: preserve-3d;
-            
             background-image: 
                 radial-gradient(circle at top left, transparent 12px, #fff3cd 13px),
                 radial-gradient(circle at top right, transparent 12px, #fff3cd 13px),
                 radial-gradient(circle at bottom left, transparent 12px, #fff3cd 13px),
                 radial-gradient(circle at bottom right, transparent 12px, #fff3cd 13px),
                 repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.015) 0px, rgba(0, 0, 0, 0.015) 2px, transparent 2px, transparent 4px);
-            
             transform: translateY(-100%);
             animation: imprimerTicket 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
             z-index: 1;
@@ -246,7 +216,6 @@
         }
         .ticket-id { font-size: 0.75rem; color: #666; max-width: 120px; word-break: break-all; font-weight: bold; }
 
-        /* Style du Bouton Officiel Apple Wallet */
         .btn-apple-wallet {
             display: inline-block;
             background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Add_to_Apple_Wallet_rgb_090221.svg/320px-Add_to_Apple_Wallet_rgb_090221.svg.png');
@@ -261,11 +230,8 @@
             transition: transform 0.2s ease;
             margin-top: 5px;
         }
-        .btn-apple-wallet:hover {
-            transform: scale(1.04);
-        }
+        .btn-apple-wallet:hover { transform: scale(1.04); }
 
-        /* --- Espace Compte Modale --- */
         #mesBilletsContainer {
             display: none; position: fixed; top: 50%; left: 50%;
             transform: translate(-50%,-50%); background: white; color: black;
@@ -280,7 +246,6 @@
         .btn-cancel { background: #dc3545; }
         .btn-view { background: #007bff; }
 
-        /* --- Profil --- */
         #welcome-msg { text-align: center; margin-bottom: 20px; }
         #user-photo { width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--primary-color); object-fit: cover; }
 
@@ -324,11 +289,6 @@
     </div>
 
     <h1>🍿 Le Cinéma de Aymen</h1>
-
-    <div class="pwa-widget-bar">
-        <button id="btn-pwa" class="btn-pwa-feature" style="display:none; background:#28a745;" onclick="installerPWA()">📲 Installer l'App</button>
-        <button id="btn-widget" class="btn-pwa-feature" style="background:#fd7e14;" onclick="ouvrirConfigurationWidget()">📱 Ajouter le Widget</button>
-    </div>
 
     <div class="container" id="filmsList"></div>
 
@@ -396,15 +356,6 @@
     </div>
 
     <script>
-        /* ========= ENREGISTREMENT DU SERVICE WORKER (PWA) ========= */
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('Service Worker Enregistré avec succès ! Scope:', reg.scope))
-                    .catch(err => console.error('Échec de l\'enregistrement du Service Worker:', err));
-            });
-        }
-
         /* ========= CONFIGURATIONS ET INITIALISATIONS ========= */
         emailjs.init({ publicKey: "0UMPQmNVTxL8v-Mu_" });
 
@@ -425,6 +376,7 @@
         const heureActuelle = new Date().getHours();
         if(heureActuelle > 7 && heureActuelle < 19) document.body.classList.add('light-mode');
 
+        /* LE DECTECTEUR DU RACCOURCI NATIF D'ECRAN D'ACCUEIL */
         window.addEventListener('DOMContentLoaded', () => {
             const savedCode = localStorage.getItem('codeClient');
             if (savedCode) {
@@ -437,45 +389,36 @@
                     mettreAJourSelectionAvatarGraphique(savedAvatar);
                 }
             }
-            
-            // Masquer le bouton d'installation si l'app est déjà lancée en mode autonome standalone
-            if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
-                const pwaBtn = document.getElementById('btn-pwa');
-                if(pwaBtn) pwaBtn.style.display = 'none';
+
+            // Détection si l'action provient du menu tactile d'accueil iOS
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('action') === 'ouvrir_billet') {
+                intercepterRaccourciEcranAccueil();
             }
         });
 
-        /* ========= GESTION DE L'INSTALLATION PWA (ANDROID & DESKTOP) ========= */
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Empêche le navigateur d'afficher la bannière par défaut
-            e.preventDefault();
-            deferredPrompt = e;
-            // Rend notre bouton personnalisé visible
-            const pwaBtn = document.getElementById('btn-pwa');
-            if (pwaBtn) pwaBtn.style.display = 'inline-block';
-        });
-
-        function installerPWA() {
-            if (!deferredPrompt) {
-                alert("💡 Astuce iPhone / Safari :\n\nPour installer l'application sur votre écran d'accueil :\n1. Appuyez sur le bouton 'Partager' (carré avec la flèche vers le haut).\n2. Sélectionnez l'option 'Sur l'écran d'accueil'.");
+        /* FONCTION INTERFACE DIRECTE DU RACCOURCI NATIVE */
+        async function intercepterRaccourciEcranAccueil() {
+            const userNom = localStorage.getItem('nomInvite') || document.getElementById('nom').value;
+            if(!userNom) {
+                alert("Aucun profil synchronisé. Entrez votre Code Client ou votre réservation d'abord.");
                 return;
             }
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('L\'utilisateur a accepté l\'installation de la PWA');
-                    document.getElementById('btn-pwa').style.display = 'none';
+            try {
+                // Interroge Firestore uniquement sur le profil détecté localement
+                const snap = await db.collection("reservations").where("nom", "==", userNom).where("venu", "==", false).get();
+                if (!snap.empty) {
+                    const docBillet = snap.docs[0];
+                    const r = docBillet.data();
+                    setTimeout(() => {
+                        voirBillet(docBillet.id, r.film, r.nom, r.prenom, r.snack);
+                    }, 500);
+                } else {
+                    alert(`Bonjour ${userNom}, aucun billet actif trouvé.`);
                 }
-                deferredPrompt = null;
-            });
-        }
-
-        /* ========= COMPAGNON COMPOSANT WIDGET ========= */
-        function ouvrirConfigurationWidget() {
-            const code = localStorage.getItem('codeClient') || "Non configuré";
-            alert(`📱 Configuration du Widget Écran d'accueil :\n\n1. Pour intégrer l'accès rapide de vos billets sur l'écran d'accueil iOS (Scriptable) ou macOS, utilisez votre identifiant client.\n2. Statut actuel du profil de synchronisation : N° ${code}.\n\nVos billets actifs s'actualiseront automatiquement dans l'extension.`);
-            console.log(`Widget Compagnon initialisé pour le codeClient : ${code}`);
+            } catch (err) {
+                console.error("Erreur raccourci dynamique", err);
+            }
         }
 
         /* ========= CONTRÔLE DE L'AMBIANCE VISUELLE ========= */
@@ -553,12 +496,12 @@
                 
                 mettreAJourSelectionAvatarGraphique(selectedAvatarUrl);
                 localStorage.setItem('codeClient', code);
+                localStorage.setItem('nomInvite', p.nom);
             }
         }
 
         function deconnexion() {
-            localStorage.removeItem('codeClient');
-            localStorage.removeItem('guestAvatar');
+            localStorage.clear();
             location.reload();
         }
 
@@ -671,9 +614,7 @@
         function simulerSonImprimante() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
-                // Génération d'un buffer de bruit blanc pur
-                const bufferSize = audioCtx.sampleRate * 0.6; // Durée calée sur 0.6 secondes
+                const bufferSize = audioCtx.sampleRate * 0.6; 
                 const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                 const data = buffer.getChannelData(0);
                 for (let i = 0; i < bufferSize; i++) {
@@ -683,18 +624,15 @@
                 const noise = audioCtx.createBufferSource();
                 noise.buffer = buffer;
 
-                // Filtre pass-bande pour donner un grain mécanique / plastique métallique étouffé
                 const filter = audioCtx.createBiquadFilter();
                 filter.type = 'bandpass';
                 filter.frequency.value = 1200;
                 filter.Q.value = 3;
 
-                // Gain nodal temporel pour simuler les lignes de hachage de la tête d'impression
                 const gainNode = audioCtx.createGain();
                 const t = audioCtx.currentTime;
                 gainNode.gain.setValueAtTime(0, t);
                 
-                // Micro Saccades rythmiques (moteur pas-à-pas de l'imprimante à ticket)
                 for(let i = 0; i < 0.6; i += 0.08) {
                     gainNode.gain.linearRampToValueAtTime(0.15, t + i);
                     gainNode.gain.linearRampToValueAtTime(0.01, t + i + 0.04);
@@ -707,7 +645,7 @@
 
                 noise.start();
             } catch (e) {
-                console.log("AudioContext bloqué ou non supporté par l'hôte.", e);
+                console.log("AudioContext bloqué.", e);
             }
         }
 
@@ -747,7 +685,6 @@
             new QRCode(document.getElementById("qr-ticket"), { text: id, width: 100, height: 100 });
             VanillaTilt.init(document.querySelector("#ticket-preview-3d"));
 
-            // Déclenchement synchronisé de la mécanique audio-visuelle de la borne
             simulerSonImprimante();
             setTimeout(() => {
                 const slot = document.getElementById('borneSlot');
@@ -956,7 +893,6 @@
         async function downloadQR() {
             const { jsPDF } = window.jspdf;
             
-            // Format Ticket vertical compact (100mm de large x 210mm de hauteur)
             const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [100, 210] });
 
             const filmNom = currentFilm ? currentFilm.nom : "Film";
@@ -966,18 +902,15 @@
             const snackChecked = document.getElementById('snackOption').checked ? "Inclus (Popcorn)" : "Non inclus";
             const dateStr = new Date().toLocaleDateString('fr-FR');
 
-            // --- 1. APPLAT COULEUR CREME RETRO & FINITIONS ---
-            doc.setFillColor(255, 243, 205); // #fff3cd
+            doc.setFillColor(255, 243, 205); 
             doc.rect(0, 0, 100, 210, "F");
 
-            // Liseré pointillé marron intérieur
-            doc.setDrawColor(181, 129, 5); // #b58105
+            doc.setDrawColor(181, 129, 5); 
             doc.setLineWidth(0.5);
             doc.setLineDashPattern([2, 1.5], 0);
             doc.rect(4, 4, 92, 202, "S");
-            doc.setLineDashPattern([], 0); // Réinitialisation
+            doc.setLineDashPattern([], 0); 
 
-            // --- 2. EXTRACTION ET INTEGRATION DE L'AFFICHE ---
             let yContenu = 120; 
             const cards = Array.from(document.querySelectorAll('.film-card'));
             let srcAffiche = null;
@@ -992,23 +925,19 @@
 
             if (srcAffiche) {
                 try {
-                    // Inclusion nette de l'affiche de couverture (60mm x 85mm)
                     doc.addImage(srcAffiche, "JPEG", 20, 10, 60, 85);
-                    
-                    // Bordure pleine d'encadrement rétro
                     doc.setDrawColor(116, 82, 3);
                     doc.setLineWidth(0.7);
                     doc.rect(19.5, 9.5, 61, 86, "S");
                     yContenu = 104; 
                 } catch(e) {
-                    console.error("Erreur de rendu sur l'affiche du film.", e);
+                    console.error("Erreur affiche PDF", e);
                     yContenu = 20; 
                 }
             }
 
-            // --- 3. MISE EN PAGE TYPE MACHINE A ÉCRIRE ---
             doc.setFont("courier", "bold");
-            doc.setTextColor(116, 82, 3); // #745203
+            doc.setTextColor(116, 82, 3); 
             doc.setFontSize(14);
             doc.text("LE CINEMA DE AYMEN", 50, yContenu, { align: "center" });
             
@@ -1042,7 +971,6 @@
             doc.line(15, currentY + 2, 85, currentY + 2);
             doc.setLineDashPattern([], 0);
 
-            // --- 4. INTEGRATION COMPOSANT INK QR CODE ---
             const qrImg = document.querySelector("#qr-ticket img");
             if (qrImg && qrImg.src) {
                 doc.addImage(qrImg.src, "PNG", 35, currentY + 6, 30, 30);
